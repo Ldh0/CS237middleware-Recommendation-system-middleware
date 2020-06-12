@@ -1,0 +1,83 @@
+Dehao's part: 
+Use the following link to create a Spark cluster without uploading anything to s3:
+https://www.youtube.com/watch?v=hSWkKk36TS8
+
+Use command to connect to Spark
+Run "mkdir SparkInput" to create a directory to store the input files.
+Run "mkdir wordcountJar" to to create a directory to store wordcount jar file.
+
+Use Maven to deply the project then.
+If there is "Error:java: 错误: 不支持发行版本 5", follow "https://blog.csdn.net/qq_22076345/article/details/82392236".
+
+My code is written on the jsch-0.1.55 original code so that I can import it directly without installing it.
+Only three .java files are needed to be care about:
+1. src/main/java/com/jcraft/jsch/TheSparkBackend.java: all codes including examples
+2. src/main/java/com/jcraft/jsch/Try.java: demo of using Java to connect to AWS using jsch
+3. src/main/java/com/jcraft/jsch/Try2.java: demo of using Java to SCP files to AWS using jsch
+
+There are 4 function to use:
+1. TheSparkBackend(String pemFileLocation, String pemFileName, String host): class constructor
+
+2. private void sendOneFileToAWS(String localAbsolutePathOfTheFile, String AWSAbsolutePathOfTheFile, String nameOfTheFile)
+    /**
+     *
+     * @param localAbsolutePathOfTheFile: the absolute local path on one's computer of the file he needs to send to AWS
+     * @param AWSAbsolutePathOfTheFile: the absolute path on AWS cluster where he needs to send his file
+     * @param nameOfTheFile: the file name
+     */
+
+3. private void getOneFileFromAWS(String localAbsolutePathOfTheFile, String AWSAbsolutePathOfTheFile, String nameOfTheFile)
+    /**
+     * 
+     * @param localAbsolutePathOfTheFile: the absolute local path on one's computer of the file he needs to store the file downloaded from AWS
+     * @param AWSAbsolutePathOfTheFile: the absolute path on AWS cluster where he needs to download his file from 
+     * @param nameOfTheFile: the file name
+     */
+
+4. private void wordcountOnOneFile(String wordcountJarPath, String wordcountJarName, String AWSAbsolutePathOfTheFile, String AWSAbsoluteOutputPath): 
+    /**
+     *
+     * @param wordcountJarPath: the absolute path on AWS cluster where the jar file is stored
+     * @param wordcountJarName: the wordcount jar file name
+     * @param AWSAbsolutePathOfTheFile: the path of input files in HDFS, remember this path is different from the absolute path mentioned above
+     *                                this function will automatically copy the files to HDFS
+     * @param AWSAbsoluteOutputPath: the path of output files in HDFS
+     */
+
+For simplicity, one just needs to read the main() function in src/main/java/com/jcraft/jsch/TheSparkBackend.java to understand how to use the above three function.
+
+
+The original result is stored in AWS hdfs, to view them, use the following commands:
+[hadoop@ip-172-31-19-157 SparkInput]$ hdfs dfs -ls /example/output
+Found 4 items
+-rw-r--r--   1 hadoop hadoop          0 2020-06-01 03:10 /example/output/_SUCCESS
+-rw-r--r--   1 hadoop hadoop          7 2020-06-01 03:10 /example/output/part-00000
+-rw-r--r--   1 hadoop hadoop          7 2020-06-01 03:10 /example/output/part-00001
+-rw-r--r--   1 hadoop hadoop         35 2020-06-01 03:10 /example/output/part-00002
+[hadoop@ip-172-31-19-157 SparkInput]$ hdfs dfs -cat /example/output/part-00000
+(aa,8)
+[hadoop@ip-172-31-19-157 SparkInput]$ hdfs dfs -cat /example/output/part-00001
+(ee,3)
+[hadoop@ip-172-31-19-157 SparkInput]$ hdfs dfs -cat /example/output/part-00002
+(cc,2)
+(bb,2)
+(dd,2)
+(kk,1)
+(gg,1)
+You can use getOneFileFromAWS() to download the result in the file name "result"
+
+Zhenyuan Zhang is in charge of the front end and part of the middleware's design and coding:
+
+WebContent includes all the html and javascript files written for front end.
+
+src/main/java/servlet includes all the servlet written to work as apis for front end to do operations includes create "Server" object and use the function of the "Server" object
+
+src/main/java/domain/Server is a class that includes all the functions that front end would use to do the operations and communications with spark servers which could be seen as part of the middleware.
+All the parameters that need to be used to change the configuration of the edge and central spark servers are hard code into Server class.
+CloudPushThread is a thread used to periodically do the renew(update) of for the central spark.
+Push to local is used to push the record of the frequency of the specific tagged items to edge spark server.
+Push to cloud is used to push the record of the frequency of all the items to central spark server.
+Pull from local is used to pull the rank of specific tagged items from edge spark server.
+Pull from cloud is used to pull the rank of all items from edge spark server.
+Other functions are used as the tools to help realize the four functions above.
+
